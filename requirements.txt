@@ -3,3 +3,5 @@ Flask-Login
 Werkzeug
 reportlab
 gunicorn
+qrcode
+Pillow
