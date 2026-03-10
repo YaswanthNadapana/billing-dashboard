@@ -175,7 +175,7 @@ def process_payment(id):
 
     time.sleep(2)
 
-    success = random.choice([True, True, True, False])
+    success = True
 
     if success:
 

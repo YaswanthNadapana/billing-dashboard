@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
 <head>
 <title>Payment</title>
@@ -12,6 +13,19 @@ color:white;
 text-align:center;
 font-family:Segoe UI;
 }
+
+.qr-box{
+background:#222;
+padding:30px;
+border-radius:12px;
+display:inline-block;
+}
+
+.status{
+font-size:18px;
+color:orange;
+margin-top:15px;
+}
 </style>
 
 </head>
@@ -22,21 +36,36 @@ font-family:Segoe UI;
 
 <h2>Scan QR to Pay</h2>
 
+<div class="qr-box">
+
 <img src="/qr/{{bill_id}}" width="250">
 
 <h3 class="mt-3">Amount: ₹{{bill.amount}}</h3>
 
-<p class="text-warning">Payment is processing...</p>
+<p class="status">
+Payment is processing...
+</p>
 
-<a href="/process_payment/{{bill_id}}" class="btn btn-success mt-3">
-I have completed payment
-</a>
-
-<br><br>
-
-<a href="/" class="btn btn-light">Cancel</a>
+<p>After completing payment, verification will happen automatically.</p>
 
 </div>
+
+<br>
+
+<a href="/" class="btn btn-light mt-3">Cancel Payment</a>
+
+</div>
+
+<script>
+
+// simulate automatic verification
+setTimeout(function(){
+
+window.location.href="/process_payment/{{bill_id}}";
+
+},7000);  // 7 seconds
+
+</script>
 
 </body>
 </html>
