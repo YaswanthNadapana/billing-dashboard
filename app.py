@@ -1,16 +1,18 @@
-from flask import Flask, render_template, request, redirect, flash, send_file
+from flask import Flask, render_template, request, redirect, flash, send_file, jsonify
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.pdfgen import canvas
 from datetime import datetime
 import io
-import qrcode
 import random
-import time
 import os
+import razorpay
 
 app = Flask(__name__)
 app.secret_key = "secret123"
+
+# Razorpay client (use TEST keys)
+razorpay_client = razorpay.Client(auth=("rzp_test_SRqpn6egMFa7YB", "Yfl6TWvobMV9BTSmmKqKPKwn"))
 
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
@@ -20,12 +22,12 @@ bills = []
 payments = []
 
 
-# PUBLIC HOME PAGE (FOR RAZORPAY VERIFICATION)
+# PUBLIC HOME PAGE
 @app.route("/")
 def home():
     return """
     <h1>Billing Dashboard</h1>
-    <p>This is a demo billing dashboard project used for invoice management.</p>
+    <p>Demo billing dashboard project.</p>
     <a href="/login">Login</a>
     """
 
@@ -98,12 +100,7 @@ def logout():
 @login_required
 def dashboard():
 
-    query = request.args.get("q","").lower()
-
     user_bills = [b for b in bills if b['user'] == current_user.id]
-
-    if query:
-        user_bills = [b for b in user_bills if query in b['category'].lower()]
 
     total = sum(b['amount'] for b in user_bills)
     paid = sum(b['amount'] for b in user_bills if b['status']=="Paid")
@@ -161,53 +158,46 @@ def pay_bill(id):
     return render_template("pay.html", bill=bill, bill_id=id)
 
 
-# QR CODE GENERATOR
-@app.route('/qr/<int:id>')
+# CREATE RAZORPAY ORDER
+@app.route("/create_order/<int:id>")
 @login_required
-def generate_qr(id):
+def create_order(id):
 
-    user_bills=[b for b in bills if b['user']==current_user.id]
-    bill=user_bills[id]
+    user_bills = [b for b in bills if b['user']==current_user.id]
+    bill = user_bills[id]
 
-    upi_id="yashnaidu1192-2@okicici"
-    name="Yaswanth Billing"
+    order = razorpay_client.order.create({
+        "amount": int(bill['amount'] * 100),
+        "currency": "INR",
+        "payment_capture": 1
+    })
 
-    upi_link=f"upi://pay?pa={upi_id}&pn={name}&am={bill['amount']}&cu=INR"
-
-    img=qrcode.make(upi_link)
-
-    buffer=io.BytesIO()
-    img.save(buffer)
-    buffer.seek(0)
-
-    return send_file(buffer,mimetype="image/png")
+    return jsonify(order)
 
 
-# PROCESS PAYMENT (SIMULATION)
-@app.route('/process_payment/<int:id>')
+# VERIFY PAYMENT
+@app.route("/payment_success/<int:id>")
 @login_required
-def process_payment(id):
+def payment_success(id):
 
-    user_bills=[b for b in bills if b['user']==current_user.id]
-    bill=user_bills[id]
+    user_bills = [b for b in bills if b['user']==current_user.id]
+    bill = user_bills[id]
 
-    time.sleep(2)
+    txn_id = "TXN" + str(random.randint(100000,999999))
 
-    txn_id="TXN"+str(random.randint(100000,999999))
-
-    bill['status']="Paid"
-    bill['transaction']=txn_id
+    bill['status'] = "Paid"
+    bill['transaction'] = txn_id
 
     payments.append({
-        "invoice":bill['invoice'],
-        "amount":bill['amount'],
-        "date":datetime.now().strftime("%d-%m-%Y %H:%M"),
-        "transaction":txn_id
+        "invoice": bill['invoice'],
+        "amount": bill['amount'],
+        "date": datetime.now().strftime("%d-%m-%Y %H:%M"),
+        "transaction": txn_id
     })
 
     flash("Payment successful","success")
 
-    return redirect('/dashboard')
+    return redirect("/dashboard")
 
 
 # DELETE BILL
@@ -240,7 +230,6 @@ def invoice(id):
     bill=user_bills[id]
 
     buffer=io.BytesIO()
-
     pdf=canvas.Canvas(buffer)
 
     pdf.setFont("Helvetica-Bold",18)
@@ -269,7 +258,7 @@ def invoice(id):
     )
 
 
-# RENDER DEPLOYMENT PORT
+# RENDER PORT
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 10000))
