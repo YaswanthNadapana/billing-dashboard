@@ -7,6 +7,7 @@ import io
 import qrcode
 import random
 import time
+import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -24,7 +25,7 @@ payments = []
 def home():
     return """
     <h1>Billing Dashboard</h1>
-    <p>This is a demo billing dashboard project.</p>
+    <p>This is a demo billing dashboard project used for invoice management.</p>
     <a href="/login">Login</a>
     """
 
@@ -45,6 +46,7 @@ def load_user(user_id):
 # REGISTER
 @app.route('/register', methods=['GET','POST'])
 def register():
+
     if request.method == 'POST':
 
         username = request.form['username']
@@ -134,15 +136,15 @@ def add_bill():
         invoice_no = f"INV-{len(bills)+1:03d}"
 
         bills.append({
-            "invoice":invoice_no,
-            "user":current_user.id,
-            "category":category,
-            "amount":amount,
-            "due_date":due_date,
-            "status":"Pending"
+            "invoice": invoice_no,
+            "user": current_user.id,
+            "category": category,
+            "amount": amount,
+            "due_date": due_date,
+            "status": "Pending"
         })
 
-        flash("Bill added!","success")
+        flash("Bill added!", "success")
         return redirect('/dashboard')
 
     return render_template("add.html")
@@ -159,7 +161,7 @@ def pay_bill(id):
     return render_template("pay.html", bill=bill, bill_id=id)
 
 
-# QR CODE
+# QR CODE GENERATOR
 @app.route('/qr/<int:id>')
 @login_required
 def generate_qr(id):
@@ -181,7 +183,7 @@ def generate_qr(id):
     return send_file(buffer,mimetype="image/png")
 
 
-# PROCESS PAYMENT
+# PROCESS PAYMENT (SIMULATION)
 @app.route('/process_payment/<int:id>')
 @login_required
 def process_payment(id):
@@ -221,7 +223,7 @@ def delete_bill(id):
     return redirect('/dashboard')
 
 
-# HISTORY
+# PAYMENT HISTORY
 @app.route('/history')
 @login_required
 def history():
@@ -253,7 +255,6 @@ def invoice(id):
     pdf.drawString(50,630,f"Status: {bill['status']}")
 
     txn=bill.get("transaction","N/A")
-
     pdf.drawString(50,600,f"Transaction ID: {txn}")
 
     pdf.save()
@@ -268,8 +269,9 @@ def invoice(id):
     )
 
 
-import os
-
+# RENDER DEPLOYMENT PORT
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 10000))
+
     app.run(host="0.0.0.0", port=port)
