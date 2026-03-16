@@ -36,7 +36,6 @@ body {
     padding: 15px;
 }
 
-/* DARK MODE */
 .dark-mode {
     background: #0f172a !important;
 }
@@ -58,150 +57,223 @@ body {
 
 <!-- HEADER -->
 <div class="d-flex justify-content-between align-items-center mb-4 text-white">
-    <h3>💳 Billing Dashboard</h3>
 
-    <div class="d-flex align-items-center gap-2">
-        <button id="themeToggle" class="btn btn-light btn-sm">🌙</button>
+<h3>💳 Billing Dashboard</h3>
 
-        <a href="/history" class="btn btn-dark btn-sm">History</a>
+<div class="d-flex align-items-center gap-2">
 
-        <span>Welcome, <strong>{{username}}</strong></span>
+<button id="themeToggle" class="btn btn-light btn-sm">🌙</button>
 
-        <a href="/logout" class="btn btn-danger btn-sm">Logout</a>
-    </div>
+<a href="/history" class="btn btn-dark btn-sm">History</a>
+
+<span>Welcome, <strong>{{username}}</strong></span>
+
+<a href="/logout" class="btn btn-danger btn-sm">Logout</a>
+
 </div>
 
-<!-- SUMMARY CARDS -->
+</div>
+
+<!-- SUMMARY -->
 <div class="row text-center mb-4">
-    <div class="col-md-4 mb-3">
-        <div class="card-glass p-3">
-            <h6>Total</h6>
-            <h4>₹<span id="total">0</span></h4>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card-glass p-3">
-            <h6>Paid</h6>
-            <h4 class="text-success">₹<span id="paid">0</span></h4>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card-glass p-3">
-            <h6>Pending</h6>
-            <h4 class="text-danger">₹<span id="pending">0</span></h4>
-        </div>
-    </div>
+
+<div class="col-md-4 mb-3">
+<div class="card-glass p-3">
+<h6>Total</h6>
+<h4>₹<span id="total">0</span></h4>
+</div>
+</div>
+
+<div class="col-md-4 mb-3">
+<div class="card-glass p-3">
+<h6>Paid</h6>
+<h4 class="text-success">₹<span id="paid">0</span></h4>
+</div>
+</div>
+
+<div class="col-md-4 mb-3">
+<div class="card-glass p-3">
+<h6>Pending</h6>
+<h4 class="text-danger">₹<span id="pending">0</span></h4>
+</div>
+</div>
+
 </div>
 
 <a href="/add" class="btn btn-light mb-3">+ Add Bill</a>
 
-<!-- 🔍 SEARCH -->
-<form method="GET" class="mb-3">
-    <input type="text" name="q" placeholder="Search category..."
-           class="form-control">
+<!-- SEARCH -->
+<form method="GET" action="/dashboard" class="mb-3">
+
+<input type="text" name="q"
+placeholder="Search category..."
+class="form-control">
+
 </form>
 
-<!-- BILL TABLE -->
+<!-- TABLE -->
+
 <div class="table-container mb-4">
+
 <table class="table table-hover align-middle">
-    <thead class="table-dark">
-        <tr>
-            <th>Invoice</th>
-            <th>Category</th>
-            <th>Amount</th>
-            <th>Due Date</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for bill in bills %}
-        <tr class="{% if bill.due_date < today|string and bill.status!='Paid' %}table-danger{% endif %}">
-            <td><strong>{{bill.invoice}}</strong></td>
-            <td>{{bill.category}}</td>
-            <td>₹{{bill.amount}}</td>
-            <td>{{bill.due_date}}</td>
-            <td>
-                {% if bill.status == "Paid" %}
-                    <span class="badge bg-success">Paid</span>
-                {% else %}
-                    <span class="badge bg-warning text-dark">Pending</span>
-                {% endif %}
-            </td>
-            <td>
-                <a href="/invoice/{{loop.index0}}" class="btn btn-dark btn-sm">PDF</a>
 
-                {% if bill.status == "Pending" %}
-                <a href="/pay/{{loop.index0}}" class="btn btn-success btn-sm">Pay</a>
-                {% endif %}
+<thead class="table-dark">
 
-                <a href="/delete/{{loop.index0}}" class="btn btn-danger btn-sm">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+<tr>
+
+<th>Invoice</th>
+<th>Category</th>
+<th>Amount</th>
+<th>Due Date</th>
+<th>Status</th>
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for bill in bills %}
+
+<tr class="{% if bill.due_date < today|string and bill.status!='Paid' %}table-danger{% endif %}">
+
+<td><strong>{{bill.invoice}}</strong></td>
+<td>{{bill.category}}</td>
+<td>₹{{bill.amount}}</td>
+<td>{{bill.due_date}}</td>
+
+<td>
+
+{% if bill.status == "Paid" %}
+<span class="badge bg-success">Paid</span>
+{% else %}
+<span class="badge bg-warning text-dark">Pending</span>
+{% endif %}
+
+</td>
+
+<td>
+
+<a href="/invoice/{{loop.index0}}" class="btn btn-dark btn-sm">PDF</a>
+
+{% if bill.status == "Pending" %}
+<a href="/pay/{{loop.index0}}" class="btn btn-success btn-sm">Pay</a>
+{% endif %}
+
+<a href="/delete/{{loop.index0}}" class="btn btn-danger btn-sm">Delete</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
 </table>
+
 </div>
 
 <!-- CHART -->
+
 <div class="table-container mt-4">
-    <h5>📊 Spending Overview</h5>
-    <div style="height:300px;">
-        <canvas id="chart"></canvas>
-    </div>
+
+<h5>📊 Spending Overview</h5>
+
+<div style="height:300px;">
+<canvas id="chart"></canvas>
+</div>
+
 </div>
 
 </div>
 
 <script>
-// 🌙 DARK MODE TOGGLE
+
 const toggle = document.getElementById("themeToggle");
+
 toggle.onclick = () => {
-    document.body.classList.toggle("dark-mode");
-    toggle.textContent =
-        document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+
+document.body.classList.toggle("dark-mode");
+
+toggle.textContent =
+document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+
 };
 
-// 📊 CHART
+// CHART
+
 document.addEventListener("DOMContentLoaded", function () {
-    const canvas = document.getElementById('chart');
-    if (!canvas) return;
 
-    const paid = {{paid}};
-    const pending = {{pending}};
-    if (paid === 0 && pending === 0) return;
+const canvas = document.getElementById('chart');
 
-    new Chart(canvas, {
-        type: 'doughnut',
-        data: {
-            labels: ['Paid', 'Pending'],
-            datasets: [{ data: [paid, pending] }]
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
+if (!canvas) return;
+
+const paid = {{paid}};
+const pending = {{pending}};
+
+if (paid === 0 && pending === 0) return;
+
+new Chart(canvas, {
+
+type: 'doughnut',
+
+data: {
+
+labels: ['Paid', 'Pending'],
+
+datasets: [{ data: [paid, pending] }]
+
+},
+
+options: {
+
+responsive: true,
+maintainAspectRatio: false
+
+}
+
 });
 
-// 💰 MONEY ANIMATION
-function animateMoney(id, value) {
-    let start = 0;
-    const el = document.getElementById(id);
-    const step = Math.ceil(value / 40);
+});
 
-    const timer = setInterval(() => {
-        start += step;
-        if(start >= value){
-            start = value;
-            clearInterval(timer);
-        }
-        el.textContent = start.toLocaleString();
-    }, 20);
+// MONEY ANIMATION
+
+function animateMoney(id, value) {
+
+let start = 0;
+
+const el = document.getElementById(id);
+
+const step = Math.ceil(value / 40);
+
+const timer = setInterval(() => {
+
+start += step;
+
+if(start >= value){
+
+start = value;
+
+clearInterval(timer);
+
+}
+
+el.textContent = start.toLocaleString();
+
+}, 20);
+
 }
 
 window.onload = () => {
-    animateMoney("total", {{total}});
-    animateMoney("paid", {{paid}});
-    animateMoney("pending", {{pending}});
+
+animateMoney("total", {{total}});
+animateMoney("paid", {{paid}});
+animateMoney("pending", {{pending}});
+
 };
+
 </script>
 
 </body>

@@ -19,6 +19,16 @@ bills = []
 payments = []
 
 
+# PUBLIC HOME PAGE (FOR RAZORPAY VERIFICATION)
+@app.route("/")
+def home():
+    return """
+    <h1>Billing Dashboard</h1>
+    <p>This is a demo billing dashboard project.</p>
+    <a href="/login">Login</a>
+    """
+
+
 # USER CLASS
 class User(UserMixin):
     def __init__(self, id, username, password):
@@ -36,6 +46,7 @@ def load_user(user_id):
 @app.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'POST':
+
         username = request.form['username']
         password = generate_password_hash(request.form['password'])
 
@@ -50,17 +61,21 @@ def register():
 # LOGIN
 @app.route('/login', methods=['GET','POST'])
 def login():
+
     error = None
 
     if request.method == 'POST':
+
         username = request.form['username']
         password = request.form['password']
 
         user = next((u for u in users if u.username == username), None)
 
         if user and check_password_hash(user.password, password):
+
             login_user(user)
-            return redirect('/')
+            return redirect('/dashboard')
+
         else:
             error = "Invalid credentials"
 
@@ -71,12 +86,13 @@ def login():
 @app.route('/logout')
 @login_required
 def logout():
+
     logout_user()
     return redirect('/login')
 
 
 # DASHBOARD
-@app.route('/')
+@app.route('/dashboard')
 @login_required
 def dashboard():
 
@@ -88,7 +104,7 @@ def dashboard():
         user_bills = [b for b in user_bills if query in b['category'].lower()]
 
     total = sum(b['amount'] for b in user_bills)
-    paid = sum(b['amount'] for b in user_bills if b['status'] == "Paid")
+    paid = sum(b['amount'] for b in user_bills if b['status']=="Paid")
     pending = total - paid
 
     today = datetime.today().date()
@@ -118,16 +134,16 @@ def add_bill():
         invoice_no = f"INV-{len(bills)+1:03d}"
 
         bills.append({
-            "invoice": invoice_no,
-            "user": current_user.id,
-            "category": category,
-            "amount": amount,
-            "due_date": due_date,
-            "status": "Pending"
+            "invoice":invoice_no,
+            "user":current_user.id,
+            "category":category,
+            "amount":amount,
+            "due_date":due_date,
+            "status":"Pending"
         })
 
-        flash("Bill added!", "success")
-        return redirect('/')
+        flash("Bill added!","success")
+        return redirect('/dashboard')
 
     return render_template("add.html")
 
@@ -137,7 +153,7 @@ def add_bill():
 @login_required
 def pay_bill(id):
 
-    user_bills = [b for b in bills if b['user'] == current_user.id]
+    user_bills = [b for b in bills if b['user']==current_user.id]
     bill = user_bills[id]
 
     return render_template("pay.html", bill=bill, bill_id=id)
@@ -148,21 +164,21 @@ def pay_bill(id):
 @login_required
 def generate_qr(id):
 
-    user_bills = [b for b in bills if b['user'] == current_user.id]
-    bill = user_bills[id]
+    user_bills=[b for b in bills if b['user']==current_user.id]
+    bill=user_bills[id]
 
-    upi_id = "yashnaidu1192-2@okicici"
-    name = "Yaswanth Billing"
+    upi_id="yashnaidu1192-2@okicici"
+    name="Yaswanth Billing"
 
-    upi_link = f"upi://pay?pa={upi_id}&pn={name}&am={bill['amount']}&cu=INR"
+    upi_link=f"upi://pay?pa={upi_id}&pn={name}&am={bill['amount']}&cu=INR"
 
-    img = qrcode.make(upi_link)
+    img=qrcode.make(upi_link)
 
-    buffer = io.BytesIO()
+    buffer=io.BytesIO()
     img.save(buffer)
     buffer.seek(0)
 
-    return send_file(buffer, mimetype="image/png")
+    return send_file(buffer,mimetype="image/png")
 
 
 # PROCESS PAYMENT
@@ -170,33 +186,26 @@ def generate_qr(id):
 @login_required
 def process_payment(id):
 
-    user_bills = [b for b in bills if b['user'] == current_user.id]
-    bill = user_bills[id]
+    user_bills=[b for b in bills if b['user']==current_user.id]
+    bill=user_bills[id]
 
     time.sleep(2)
 
-    success = True
+    txn_id="TXN"+str(random.randint(100000,999999))
 
-    if success:
+    bill['status']="Paid"
+    bill['transaction']=txn_id
 
-        txn_id = "TXN" + str(random.randint(100000,999999))
+    payments.append({
+        "invoice":bill['invoice'],
+        "amount":bill['amount'],
+        "date":datetime.now().strftime("%d-%m-%Y %H:%M"),
+        "transaction":txn_id
+    })
 
-        bill['status'] = "Paid"
-        bill['transaction'] = txn_id
+    flash("Payment successful","success")
 
-        payments.append({
-            "invoice": bill['invoice'],
-            "amount": bill['amount'],
-            "date": datetime.now().strftime("%d-%m-%Y %H:%M"),
-            "transaction": txn_id
-        })
-
-        flash("Payment successful", "success")
-
-    else:
-        flash("Sorry your payment has been declined", "danger")
-
-    return redirect('/')
+    return redirect('/dashboard')
 
 
 # DELETE BILL
@@ -204,17 +213,19 @@ def process_payment(id):
 @login_required
 def delete_bill(id):
 
-    user_bills = [b for b in bills if b['user'] == current_user.id]
+    user_bills=[b for b in bills if b['user']==current_user.id]
     bills.remove(user_bills[id])
 
-    flash("Bill deleted", "danger")
-    return redirect('/')
+    flash("Bill deleted","danger")
+
+    return redirect('/dashboard')
 
 
 # HISTORY
 @app.route('/history')
 @login_required
 def history():
+
     return render_template("history.html", payments=payments)
 
 
@@ -223,11 +234,12 @@ def history():
 @login_required
 def invoice(id):
 
-    user_bills = [b for b in bills if b['user'] == current_user.id]
-    bill = user_bills[id]
+    user_bills=[b for b in bills if b['user']==current_user.id]
+    bill=user_bills[id]
 
-    buffer = io.BytesIO()
-    pdf = canvas.Canvas(buffer)
+    buffer=io.BytesIO()
+
+    pdf=canvas.Canvas(buffer)
 
     pdf.setFont("Helvetica-Bold",18)
     pdf.drawString(200,800,"INVOICE")
@@ -240,10 +252,12 @@ def invoice(id):
     pdf.drawString(50,660,f"Due Date: {bill['due_date']}")
     pdf.drawString(50,630,f"Status: {bill['status']}")
 
-    txn = bill.get("transaction","N/A")
+    txn=bill.get("transaction","N/A")
+
     pdf.drawString(50,600,f"Transaction ID: {txn}")
 
     pdf.save()
+
     buffer.seek(0)
 
     return send_file(
@@ -254,5 +268,5 @@ def invoice(id):
     )
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     app.run(debug=True)
